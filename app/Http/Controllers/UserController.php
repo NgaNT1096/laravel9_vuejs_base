@@ -12,7 +12,8 @@ use Illuminate\Support\Facades\Hash;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
-
+use Inertia\Inertia;
+use Illuminate\Support\Facades\Auth;
 class UserController extends Controller
 {
     /**
@@ -24,26 +25,27 @@ class UserController extends Controller
     {
         $this->middleware('auth');
         $this->middleware('permission:user-list|user-create|user-edit|user-delete', ['only' => ['index']]);
-        $this->middleware('permission:user-create', ['only' => ['create','store', 'updateStatus']]);
+        $this->middleware('permission:user-create', ['only' => ['create','store']]);
         $this->middleware('permission:user-edit', ['only' => ['edit','update']]);
         $this->middleware('permission:user-delete', ['only' => ['delete']]);
     }
 
 
     /**
-     * List User 
+     * List User
      * @param Nill
      * @return Array $user
      * @author Shani Singh
      */
     public function index()
     {
-        $users = User::with('roles')->paginate(10);
-        return view('users.index', ['users' => $users]);
+        $users = User::with('roles')->paginate(5);
+        return Inertia::render('auth/users/list',compact('users'));
+        // return view('users.index', ['users' => $users]);
     }
-    
+
     /**
-     * Create User 
+     * Create User
      * @param Nill
      * @return Array $user
      * @author Shani Singh
@@ -51,8 +53,9 @@ class UserController extends Controller
     public function create()
     {
         $roles = Role::all();
-       
-        return view('users.add', ['roles' => $roles]);
+
+        return Inertia::render('auth/users/add',compact('roles'));
+        //return view('users.add', ['roles' => $roles]);
     }
 
     /**
@@ -89,7 +92,6 @@ class UserController extends Controller
 
             // Delete Any Existing Role
             DB::table('model_has_roles')->where('model_id',$user->id)->delete();
-            
             // Assign Role To User
             $user->assignRole($user->role_id);
 
@@ -152,10 +154,11 @@ class UserController extends Controller
     public function edit(User $user)
     {
         $roles = Role::all();
-        return view('users.edit')->with([
-            'roles' => $roles,
-            'user'  => $user
-        ]);
+        return Inertia::render('auth/users/edit',compact('roles','user'));
+        // return view('users.edit')->with([
+        //     'roles' => $roles,
+        //     'user'  => $user
+        // ]);
     }
 
     /**
@@ -191,9 +194,9 @@ class UserController extends Controller
 
             // Delete Any Existing Role
             DB::table('model_has_roles')->where('model_id',$user->id)->delete();
-            
+
             // Assign Role To User
-            $user->assignRole($user->role_id);
+            $user->assignRole($request->role_id);
 
             // Commit And Redirected To Listing
             DB::commit();
@@ -229,23 +232,24 @@ class UserController extends Controller
     }
 
     /**
-     * Import Users 
+     * Import Users
      * @param Null
      * @return View File
      */
     public function importUsers()
     {
-        return view('users.import');
+        return Inertia::render('auth/users/import');
+       // return view('users.import');
     }
 
     public function uploadUsers(Request $request)
     {
         Excel::import(new UsersImport, $request->file);
-        
+
         return redirect()->route('users.index')->with('success', 'User Imported Successfully');
     }
 
-    public function export() 
+    public function export()
     {
         return Excel::download(new UsersExport, 'users.xlsx');
     }

@@ -56,6 +56,23 @@ class User extends Authenticatable
     {
         return "{$this->first_name} {$this->last_name}";
     }
-
+    public function getPermissionArray()
+    {
+        return $this->getAllPermissions()->mapWithKeys(function ($pr) {
+            return [$pr['name'] => true];
+        });
+    }
+    public function getRolesArray()
+    {
+        return $this->roles->mapWithKeys(function ($pr) {
+            return [$pr['name'] => true];
+        });
+    }
+    public function getRolesName()
+    {
+        return $this->roles->mapWithKeys(function ($pr) {
+            return [$pr['name']];
+        });
+    }
 
 }

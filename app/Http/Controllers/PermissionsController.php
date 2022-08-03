@@ -5,7 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
-
+use Inertia\Inertia;
+use Illuminate\Support\Facades\Auth;
 class PermissionsController extends Controller
 {
     /**
@@ -31,9 +32,10 @@ class PermissionsController extends Controller
     {
         $permissions = Permission::paginate(10);
 
-        return view('permissions.index', [
-            'permissions' => $permissions
-        ]);
+        return Inertia::render('auth/permissions/index',compact('permissions'));
+        // return view('permissions.index', [
+        //     'permissions' => $permissions
+        // ]);
     }
 
     /**
@@ -60,7 +62,7 @@ class PermissionsController extends Controller
                 'name' => 'required',
                 'guard_name' => 'required'
             ]);
-    
+
             Permission::create($request->all());
 
             DB::commit();
@@ -69,7 +71,7 @@ class PermissionsController extends Controller
             DB::rollback();
             return redirect()->route('permissions.add')->with('error',$th->getMessage());
         }
-        
+
     }
 
     /**
@@ -111,14 +113,14 @@ class PermissionsController extends Controller
                 'name' => 'required',
                 'guard_name' => 'required'
             ]);
-            
+
             $permission = Permission::whereId($id)->first();
 
             $permission->name = $request->name;
             $permission->guard_name = $request->guard_name;
             $permission->save();
-            
-            
+
+
             DB::commit();
             return redirect()->route('permissions.index')->with('success','Permissions updated successfully.');
         } catch (\Throwable $th) {
@@ -137,9 +139,9 @@ class PermissionsController extends Controller
     {
         DB::beginTransaction();
         try {
-    
+
             Permission::whereId($id)->delete();
-            
+
             DB::commit();
             return redirect()->route('permissions.index')->with('success','Permissions deleted successfully.');
         } catch (\Throwable $th) {

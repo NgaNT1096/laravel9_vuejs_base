@@ -6,27 +6,57 @@
 
 require('./bootstrap');
 
-window.Vue = require('vue').default;
+import Vue from 'vue'
+import { createInertiaApp } from '@inertiajs/inertia-vue'
+import { InertiaProgress } from '@inertiajs/progress'
 
-/**
- * The following block of code may be used to automatically register your
- * Vue components. It will recursively scan this directory for the Vue
- * components and automatically register them with their "basename".
- *
- * Eg. ./components/ExampleComponent.vue -> <example-component></example-component>
- */
+InertiaProgress.init()
+createInertiaApp({
+  title: title => `${title} - Holomia`,
+  resolve: name => require(`./Pages/${name}`),
+  setup({ el, App, props, plugin }) {
+    Vue.use(plugin)
 
-// const files = require.context('./', true, /\.vue$/i)
-// files.keys().map(key => Vue.component(key.split('/').pop().split('.')[0], files(key).default))
+    new Vue({
+      render: h => h(App, props),
+    }).$mount(el)
+  },
+})
+Vue.mixin({
+    methods: {
+        route: window.route,
+    }
+})
+Vue.mixin({
+    methods: {
+        hasAnyPermission: function(permissions) {
 
-Vue.component('example-component', require('./components/ExampleComponent.vue').default);
+            var allPermissions = this.$page.props.auth.can;
+            var hasPermission = false;
+            permissions.forEach(function(item) {
+                if (allPermissions[item]) hasPermission = true;
+            });
+            return hasPermission;
+        },
+        hasAnyRoles: function(roles) {
 
-/**
- * Next, we will create a fresh Vue application instance and attach it to
- * the page. Then, you may begin adding components to this application
- * or customize the JavaScript scaffolding to fit your unique needs.
- */
+            var allroles = this.$page.props.auth.roles;
 
-const app = new Vue({
-    el: '#wrapper',
-});
+            var hasRole = false;
+            roles.forEach(function(item) {
+
+                if (allroles[item]) hasRole = true;
+
+            });
+            return hasRole;
+        },
+        hasRoles: function(user, roles) {
+            var hasRole = false;
+            user.roles.forEach(function(item) {
+                if (item.name == roles) hasRole = true;
+            });
+            return hasRole;
+        },
+    },
+})
+window.Bus = new Vue();
